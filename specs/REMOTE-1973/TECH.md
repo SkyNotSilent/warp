@@ -217,7 +217,7 @@ Keep `OrderedTerminalEventType::CommandExecutionFinished` as the existing low-la
 
 Meaningful sharer/viewer version skew can still diverge during exceptional sequences: an old viewer cannot use a new sharer's additional `Precmd` fields, and a new viewer cannot recover from an old sharer's legacy `Precmd` if `CommandFinished` was also lost. Accept this rare overlap rather than reproducing unsafe old behavior. The legacy prompt-only path preserves normal old-sharer/new-viewer prompt application.
 
-Reduce the old-sharer population before relying on correlated `Precmd`: ship the protocol-only emitter/parser change to stable as soon as possible, then allow two additional stable releases to ship before enabling state-mutating lifecycle recovery, including for dogfood. The coordinator and normal-flow parity work may be prepared during this window, but compatibility-sensitive recovery actions remain disabled.
+Reduce the old-sharer population before relying on correlated `Precmd` in production: ship the protocol-only emitter/parser change to stable as soon as possible, then allow two additional stable releases to ship before enabling state-mutating lifecycle recovery in production. The remaining implementation may merge and recovery may be enabled for dev/dogfood during this compatibility soak.
 
 Loading or appending shared-session scrollback resets the coordinator to `Unknown` so later correlated evidence re-establishes the phase. No serialized block, persistence, history, AI-result, or shared-session result schema changes are required.
 
@@ -231,18 +231,21 @@ Record phase, input kind, recovery action, active/hook session IDs, active and s
 
 ### 7. Use one lifecycle pipeline and feature-flag only abnormal recovery
 
-Add `FeatureFlag::TerminalLifecycleRecovery` in `crates/warp_core/src/features.rs`. Leave it disabled in every channel during the two-release compatibility soak, then enable it only for dogfood.
+Add `FeatureFlag::TerminalLifecycleRecovery` in `crates/warp_features/src/lib.rs`. Enable it only for dev/dogfood during the two-release compatibility soak; leave it disabled in production.
 
 Do not maintain separate legacy and new lifecycle-mutation pipelines. Route every lifecycle input through `BlockLifecycleCoordinator` and the shared completion/prompt application helpers unconditionally. Normal transitions, duplicate/collision rejection, and the rule that unsupported evidence never reaches the old unsafe mutation path are always enabled.
 
-Use `TerminalLifecycleRecovery` only when the coordinator selects a non-normal recovery action that would mutate state for a sequence Warp previously mishandled, such as completing from a correlated `Precmd`. When the flag is disabled, keep the same coordinator and diagnostics but conservatively ignore that recovery action. This keeps the flag localized to action selection rather than duplicating lifecycle logic. Ship the protocol-only first slice to stable as soon as possible, then keep recovery actions disabled until two additional stable releases have shipped with correlated `Precmd`. After dogfood enablement, leave recovery actions dogfood-only for at least one full week before the human DRI considers external promotion; promotion and eventual flag removal are not implementation slices in this spec.
+Use `TerminalLifecycleRecovery` only when the coordinator selects a non-normal recovery action that would mutate state for a sequence Warp previously mishandled, such as completing from a correlated `Precmd`. When the flag is disabled, keep the same coordinator and diagnostics but conservatively ignore that recovery action. This keeps the flag localized to action selection rather than duplicating lifecycle logic. Ship the protocol-only first slice to stable as soon as possible. The remaining implementation and dev/dogfood enablement may merge during the compatibility soak, but production recovery remains disabled until two additional stable releases have shipped with correlated `Precmd`. Leave recovery actions dogfood-only for at least one full week before the human DRI considers production enablement; production promotion and eventual flag removal are not implementation slices in this spec.
 
 Deliver in sequential reviewable slices:
 
-1. Add flattened `CompletionMetadata`, split reusable `PromptMetadata` from the wire `PrecmdValue`, update all shell emitters to send the same completion pair in both hooks, and add protocol serialization/parsing tests without changing block behavior.
-2. Add `BlockLifecycleCoordinator`, telemetry, phase reconciliation, and route normal lifecycle/start events through the single new pipeline with normal-flow parity.
-3. Add repeated-`Precmd` refresh, correlated-`Precmd` reconciliation, and start rejection/coalescing; gate only state-mutating non-normal recovery actions behind `TerminalLifecycleRecovery`.
-4. After the protocol-only change has shipped in stable plus two additional stable releases, enable recovery actions for dogfood.
+1. Update all shell emitters to send the same completion pair in both hooks, without restructuring the Rust hook value structs or changing block behavior.
+2. Add flattened `CompletionMetadata`, split reusable `PromptMetadata` from the wire `PrecmdValue`, classify canonical/legacy/malformed `Precmd`, and add protocol serialization/parsing tests without changing block behavior.
+3. Centralize normal lifecycle mutations behind focused `TerminalModel`, `BlockList`, and `Block` helpers with normal-flow parity.
+4. Add `BlockLifecycleCoordinator`, telemetry, phase reconciliation, start rejection/coalescing, and unconditional safety rules; keep state-mutating recovery disabled.
+5. Add repeated-`Precmd` refresh and safe legacy prompt handling.
+6. Add correlated-`Precmd` completion reconciliation and shared-session recovery; gate state-mutating non-normal recovery actions behind `TerminalLifecycleRecovery`.
+7. Enable recovery actions for dev/dogfood while keeping them disabled in production.
 
 ## End-to-end flow
 
@@ -321,7 +324,7 @@ Implement the slices sequentially. Reviewers can still review the protocol/schem
 - **Incomplete key-value hooks could appear valid through defaults.** Never treat defaulted `CompletionMetadata` as evidence; the decoder/builder must require both completion fields together.
 - **Sharer/viewer block sequences could diverge.** Both parse the same raw shell-generated next block ID from correlated `Precmd`; neither generates a recovery ID.
 - **Client-version skew could still diverge during an exceptional sequence.** Preserve normal prompt application for a new viewer of an old sharer, but never let legacy prompt-only evidence complete or advance a block. Accept the rare exceptional divergence rather than emulating unsafe old behavior.
-- **Too many old sharers could limit correlated-`Precmd` recovery.** Ship the protocol-only change to stable first and wait through two additional stable releases before enabling recovery actions, reducing the active old-sharer population before Warp relies on the new evidence.
+- **Too many old sharers could limit correlated-`Precmd` recovery.** Ship the protocol-only change to stable first and wait through two additional stable releases before enabling recovery actions in production, reducing the active old-sharer population before production Warp relies on the new evidence.
 - **Unexpected transition volume could hide a producer regression.** Dogfood rollout and rate-limited structured telemetry provide visibility before broader enablement.
 
 ## Follow-ups
