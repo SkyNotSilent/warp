@@ -10,6 +10,8 @@ pub(in crate::terminal) use transition::{
 };
 use warp_core::features::FeatureFlag;
 
+use super::block::BlockState;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum StartCommandOutcome {
     Accepted,
@@ -47,18 +49,47 @@ impl BlockLifecycleCoordinator {
         input: LifecycleInput,
     ) -> LifecycleTransition {
         let previous_phase = transition::reconcile_phase(self.phase, snapshot);
-        let (next_phase, planned_action) = transition::plan(previous_phase, input, snapshot);
-        let action = if matches!(
-            planned_action,
-            LifecycleAction::RefreshPrecmd | LifecycleAction::ReconcileCompletionThenApplyPrecmd
-        ) && !FeatureFlag::TerminalLifecycleRecovery.is_enabled()
-        {
-            LifecycleAction::Ignore(IgnoreReason::RecoveryDisabled)
-        } else {
-            planned_action
+        let (planned_next_phase, planned_action) = transition::plan(previous_phase, input);
+        let recovers_command_finished = matches!(
+            (input, planned_action),
+            (
+                LifecycleInput::CommandFinished(NextBlockIdDisposition::Novel),
+                LifecycleAction::AcceptCommandFinished,
+            )
+        ) && match previous_phase {
+            LifecyclePhase::AwaitingPrecmd | LifecyclePhase::Unknown => true,
+            LifecyclePhase::AtPrompt => snapshot.is_bootstrap_done,
+            LifecyclePhase::Submitted | LifecyclePhase::Executing | LifecyclePhase::Terminated => {
+                false
+            }
         };
+        let is_gated_recovery = recovers_command_finished
+            || matches!(
+                planned_action,
+                LifecycleAction::RefreshPrecmd
+                    | LifecycleAction::ReconcileCompletionThenApplyPrecmd
+            );
+        let (next_phase, action) =
+            if is_gated_recovery && !FeatureFlag::TerminalLifecycleRecovery.is_enabled() {
+                (
+                    previous_phase,
+                    LifecycleAction::Ignore(IgnoreReason::RecoveryDisabled),
+                )
+            } else {
+                (planned_next_phase, planned_action)
+            };
+        let reconciles_missing_execution = matches!(
+            (input, planned_action),
+            (
+                LifecycleInput::CommandFinished(NextBlockIdDisposition::Novel),
+                LifecycleAction::AcceptCommandFinished,
+            )
+        ) && !snapshot.finished
+            && snapshot.block_state != BlockState::Executing;
         let should_record = action.is_ignored()
-            || matches!(action, LifecycleAction::RefreshPrecmd)
+            || is_gated_recovery
+            || reconciles_missing_execution
+            || snapshot.completion_mismatch
             || matches!(
                 (previous_phase, input),
                 (

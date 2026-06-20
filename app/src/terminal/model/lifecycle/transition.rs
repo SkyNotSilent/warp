@@ -83,6 +83,7 @@ pub(in crate::terminal) struct LifecycleSnapshot {
     pub is_bootstrapped: bool,
     pub is_bootstrap_done: bool,
     pub is_alt_screen_active: bool,
+    pub completion_mismatch: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -99,7 +100,6 @@ pub(in crate::terminal) enum IgnoreReason {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[allow(dead_code)]
 pub(in crate::terminal) enum LifecycleAction {
     StartActiveBlock,
     ApplyPreexec,
@@ -162,7 +162,6 @@ pub(super) fn reconcile_phase(
 pub(super) fn plan(
     previous_phase: LifecyclePhase,
     input: LifecycleInput,
-    snapshot: &LifecycleSnapshot,
 ) -> (LifecyclePhase, LifecycleAction) {
     use IgnoreReason::*;
     use LifecycleAction::*;
@@ -193,9 +192,9 @@ pub(super) fn plan(
         CommandFinished(ActiveDuplicate) => (previous_phase, Ignore(DuplicateCompletion)),
         CommandFinished(ExistingCollision) => (previous_phase, Ignore(CollidingCompletion)),
         CommandFinished(Novel) => match previous_phase {
-            AtPrompt if !snapshot.is_bootstrap_done => (AwaitingPrecmd, AcceptCommandFinished),
-            Submitted | Executing => (AwaitingPrecmd, AcceptCommandFinished),
-            AwaitingPrecmd | AtPrompt | Unknown => (previous_phase, Ignore(RecoveryDisabled)),
+            AwaitingPrecmd | AtPrompt | Submitted | Executing | Unknown => {
+                (AwaitingPrecmd, AcceptCommandFinished)
+            }
             Terminated => (Terminated, Ignore(IgnoredTerminated)),
         },
         PrecmdWithCompletionMetadata(ExistingCollision) => {
@@ -204,7 +203,7 @@ pub(super) fn plan(
         PrecmdWithCompletionMetadata(Novel) => match previous_phase {
             Terminated => (Terminated, Ignore(IgnoredTerminated)),
             AwaitingPrecmd | AtPrompt | Submitted | Executing | Unknown => {
-                (previous_phase, Ignore(RecoveryDisabled))
+                (AtPrompt, ReconcileCompletionThenApplyPrecmd)
             }
         },
         PrecmdWithCompletionMetadata(ActiveDuplicate) => match previous_phase {
