@@ -94,7 +94,6 @@ pub(in crate::terminal) enum IgnoreReason {
     CollidingCompletion,
     RepeatedPreexec,
     RepeatedPreexecDifferentCommand,
-    RepeatedPrecmd,
     UnsupportedPromptOnlyPrecmd,
     RecoveryDisabled,
 }
@@ -210,13 +209,13 @@ pub(super) fn plan(
         },
         PrecmdWithCompletionMetadata(ActiveDuplicate) => match previous_phase {
             AwaitingPrecmd => (AtPrompt, ApplyPrecmd),
-            AtPrompt => (AtPrompt, Ignore(RepeatedPrecmd)),
+            AtPrompt => (AtPrompt, RefreshPrecmd),
             Submitted | Executing | Unknown => (previous_phase, Ignore(RecoveryDisabled)),
             Terminated => (Terminated, Ignore(IgnoredTerminated)),
         },
         PromptOnlyPrecmd => match previous_phase {
             AwaitingPrecmd => (AtPrompt, ApplyPrecmd),
-            AtPrompt => (AtPrompt, Ignore(RepeatedPrecmd)),
+            AtPrompt => (AtPrompt, RefreshPrecmd),
             Submitted | Executing | Unknown => {
                 (previous_phase, Ignore(UnsupportedPromptOnlyPrecmd))
             }
