@@ -906,7 +906,7 @@ fn accepted_precmd_and_preexec_target_the_block_list_while_the_alt_screen_is_act
         session_id: None,
     });
     terminal.enter_alt_screen(true);
-    terminal.precmd(PrecmdValue {
+    terminal.precmd_with_completion_metadata(PrecmdValue {
         completion_metadata: CompletionMetadata {
             exit_code: ExitCode::from(0),
             next_block_id,
@@ -976,7 +976,7 @@ fn normal_lifecycle_pipeline_emits_completion_and_prompt_side_effects_once() {
         completion_metadata: completion_metadata.clone(),
         session_id: None,
     });
-    terminal.precmd(PrecmdValue {
+    terminal.precmd_with_completion_metadata(PrecmdValue {
         completion_metadata,
         prompt_metadata: PromptMetadata {
             pwd: Some("/normal-lifecycle".to_owned()),
@@ -1118,7 +1118,7 @@ fn duplicate_and_colliding_completion_evidence_is_ignored() {
         },
         session_id: None,
     });
-    terminal.precmd(PrecmdValue {
+    terminal.precmd_with_completion_metadata(PrecmdValue {
         completion_metadata: CompletionMetadata {
             exit_code: ExitCode::from(0),
             next_block_id: second_block_id.clone(),
@@ -1167,14 +1167,14 @@ fn terminal_exit_absorbs_later_lifecycle_inputs() {
         },
         session_id: None,
     });
-    terminal.precmd(PrecmdValue {
+    terminal.precmd_with_completion_metadata(PrecmdValue {
         completion_metadata: CompletionMetadata {
             exit_code: ExitCode::from(1),
             next_block_id: active_block_id.clone(),
         },
         prompt_metadata: PromptMetadata::default(),
     });
-    terminal.legacy_precmd(PromptMetadata::default());
+    terminal.prompt_only_precmd(PromptMetadata::default());
     terminal.init_shell(InitShellValue {
         shell: "bash".to_owned(),
         user: "ignored".to_owned(),
