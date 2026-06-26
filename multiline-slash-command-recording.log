@@ -1,0 +1,25 @@
+[+00:00.000] Recording started (auto via env var)
+[+00:00.000] Step started: Wait for bootstrapping
+[+00:00.142] Assertion started: no pending model events
+[+00:00.194] Assertion passed: no pending model events
+[+00:00.243] Assertion started: no block executing
+[+00:00.465] Assertion passed: no block executing
+[+00:00.501] Assertion started: waiting for bootstrapping
+[+00:00.545] Assertion passed: waiting for bootstrapping
+[+00:00.545] Step succeeded: Wait for bootstrapping
+[+00:00.545] Step started: Type initial multiline slash command
+[+00:00.545] Event: TypedCharacters '/plan
+write a product spec'
+[+00:00.629] Assertion started: no pending model events
+[+00:00.629] Assertion passed: no pending model events
+[+00:00.679] Assertion started: no block executing
+[+00:00.679] Assertion passed: no block executing
+[+00:00.752] Assertion started: Initial multiline slash command is in the input
+[+00:00.752] Assertion passed: Initial multiline slash command is in the input
+[+00:00.752] Step succeeded: Type initial multiline slash command
+[+00:00.756] Step started: Replace with another multiline slash command
+[+00:00.765] Action executed
+[+00:00.765] Action executed
+[+00:00.815] Assertion started: Edited multiline slash command is visible
+[+00:00.815] Assertion passed: Edited multiline slash command is visible
+[+00:00.815] Step succeeded: Replace with another multiline slash command
