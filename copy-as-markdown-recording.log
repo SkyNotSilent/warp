@@ -1,0 +1,34 @@
+[+00:00.000] Recording started (auto via env var)
+[+00:00.000] Step started: Wait for bootstrapping
+[+00:00.018] Assertion started: no pending model events
+[+00:00.048] Assertion passed: no pending model events
+[+00:00.074] Assertion started: no block executing
+[+00:00.319] Assertion passed: no block executing
+[+00:00.355] Assertion started: waiting for bootstrapping
+[+00:00.355] Assertion passed: waiting for bootstrapping
+[+00:00.355] Step succeeded: Wait for bootstrapping
+[+00:00.355] Step started: Create and open AI document
+[+00:00.382] Action executed
+[+00:00.382] Step succeeded: Create and open AI document
+[+00:00.382] Step started: Wait for AI document overflow menu button
+[+00:00.443] Assertion started: no pending model events
+[+00:00.443] Assertion passed: no pending model events
+[+00:00.505] Assertion started: no block executing
+[+00:00.505] Assertion passed: no block executing
+[+00:00.548] Assertion started: unnamed
+[+00:00.548] Assertion passed: unnamed
+[+00:00.548] Step succeeded: Wait for AI document overflow menu button
+[+00:00.548] Step started: Open AI document overflow menu
+[+00:00.621] Assertion started: no pending model events
+[+00:00.621] Assertion passed: no pending model events
+[+00:00.660] Assertion started: no block executing
+[+00:00.660] Assertion passed: no block executing
+[+00:00.660] Step succeeded: Open AI document overflow menu
+[+00:00.660] Step started: Copy AI document as Markdown
+[+00:00.691] Assertion started: no pending model events
+[+00:00.691] Assertion passed: no pending model events
+[+00:00.716] Assertion started: no block executing
+[+00:00.716] Assertion passed: no block executing
+[+00:00.742] Assertion started: unnamed
+[+00:00.742] Assertion passed: unnamed
+[+00:00.742] Step succeeded: Copy AI document as Markdown
