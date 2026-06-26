@@ -1,0 +1,58 @@
+[+00:00.000] Recording started (auto via env var)
+[+00:00.000] Step started: Wait for bootstrapping
+[+00:00.021] Assertion started: no pending model events
+[+00:00.021] Assertion passed: no pending model events
+[+00:00.038] Assertion started: no block executing
+[+00:00.440] Assertion passed: no block executing
+[+00:00.484] Assertion started: waiting for bootstrapping
+[+00:00.531] Assertion passed: waiting for bootstrapping
+[+00:00.573] Assertion started: unnamed
+[+00:00.573] Assertion passed: unnamed
+[+00:00.573] Step succeeded: Wait for bootstrapping
+[+00:00.573] Step started: Run 'echo WARP_PS1_COPY_E2E_OUTPUT' and verify block exists
+[+00:00.573] Event: TypedCharacters 'echo WARP_PS1_COPY_E2E_OUTPUT'
+[+00:00.591] Event: KeyDown ''
+[+00:00.603] Action executed
+[+00:00.634] Assertion started: no pending model events
+[+00:00.634] Assertion passed: no pending model events
+[+00:00.680] Assertion started: no block executing
+[+00:00.680] Assertion passed: no block executing
+[+00:00.760] Assertion started: assert 'echo WARP_PS1_COPY_E2E_OUTPUT' ran
+[+00:00.760] Assertion passed: assert 'echo WARP_PS1_COPY_E2E_OUTPUT' ran
+[+00:00.840] Assertion started: assert command output
+[+00:00.840] Assertion passed: assert command output
+[+00:00.884] Assertion started: wait for precmd so we have metadata for the next block
+[+00:00.884] Assertion passed: wait for precmd so we have metadata for the next block
+[+00:00.920] Assertion started: assert exit code
+[+00:00.921] Assertion passed: assert exit code
+[+00:00.954] Assertion started: check that input is empty
+[+00:00.954] Assertion passed: check that input is empty
+[+00:00.954] Step succeeded: Run 'echo WARP_PS1_COPY_E2E_OUTPUT' and verify block exists
+[+00:00.954] Step started: Select last block
+[+00:00.954] Event: KeyDown 'up'
+[+00:00.993] Assertion started: no pending model events
+[+00:00.993] Assertion passed: no pending model events
+[+00:01.017] Assertion started: no block executing
+[+00:01.017] Assertion passed: no block executing
+[+00:01.042] Assertion started: unnamed
+[+00:01.042] Assertion passed: unnamed
+[+00:01.042] Step succeeded: Select last block
+[+00:01.042] Step started: Type Open Block Context Menu in command palette
+[+00:01.042] Event: KeyDown 'p'
+[+00:01.109] Event: TypedCharacters 'Open Block Context Menu'
+[+00:01.218] Assertion started: unnamed
+[+00:01.218] Assertion passed: unnamed
+[+00:01.218] Step succeeded: Type Open Block Context Menu in command palette
+[+00:01.220] Step started: Run Open Block Context Menu in command palette
+[+00:01.220] Event: KeyDown ''
+[+00:01.261] Assertion started: unnamed
+[+00:01.261] Assertion passed: unnamed
+[+00:01.261] Step succeeded: Run Open Block Context Menu in command palette
+[+00:01.261] Step started: Copy block includes PS1 prompt, command, and output
+[+00:01.292] Assertion started: no pending model events
+[+00:01.292] Assertion passed: no pending model events
+[+00:01.316] Assertion started: no block executing
+[+00:01.316] Assertion passed: no block executing
+[+00:01.346] Assertion started: unnamed
+[+00:01.346] Assertion passed: unnamed
+[+00:01.346] Step succeeded: Copy block includes PS1 prompt, command, and output
