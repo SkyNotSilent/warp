@@ -2,11 +2,11 @@ use std::future::Future;
 #[cfg(feature = "local_fs")]
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 #[cfg(not(target_family = "wasm"))]
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 #[cfg(not(target_family = "wasm"))]
-use crc::{Crc, CRC_32_ISCSI};
+use crc::{CRC_32_ISCSI, Crc};
 pub use warp_server_client::HttpStatusError;
 
 #[cfg(feature = "local_fs")]
@@ -245,10 +245,7 @@ async fn ensure_upload_succeeded(
 
     let status = response.status();
     let body = response.text().await.unwrap_or_default();
-    let status_err = HttpStatusError {
-        status: status.as_u16(),
-        body: body.clone(),
-    };
+    let status_err = HttpStatusError::new(status.as_u16(), body.clone());
     Err(anyhow::Error::new(status_err).context(format!(
         "{} failed with status {status}: {body}",
         error_context.failure

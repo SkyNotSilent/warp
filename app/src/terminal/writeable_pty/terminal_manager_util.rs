@@ -1,5 +1,5 @@
-use std::sync::mpsc::SyncSender;
 use std::sync::Arc;
+use std::sync::mpsc::SyncSender;
 
 use async_channel::Receiver;
 use parking_lot::FairMutex;
@@ -14,9 +14,9 @@ use crate::terminal::writeable_pty::pty_controller::EventLoopSender;
 use crate::terminal::writeable_pty::{
     PtyController, PtyControllerEvent, PtyIntent, PtyIntentEvent, TerminalSurface,
 };
-#[cfg(not(target_family = "wasm"))]
-use crate::terminal::{view, TerminalView};
 use crate::terminal::{ModelEventDispatcher, TerminalModel};
+#[cfg(not(target_family = "wasm"))]
+use crate::terminal::{TerminalView, view};
 
 /// Wires up bi-directional communication between the PtyController and a terminal surface.
 /// Note that this interaction can't live in the surface itself because the surface must be
@@ -57,6 +57,12 @@ pub fn wire_up_pty_controller_with_surface<T: EventLoopSender, S: TerminalSurfac
                     controller.write_end_of_transmission_char(ctx);
                 });
             }
+            #[cfg(not(target_family = "wasm"))]
+            PtyIntent::Interrupt => {
+                controller.update(ctx, |controller, ctx| {
+                    controller.write_interrupt(ctx);
+                });
+            }
             PtyIntent::ShutdownPty => {
                 controller.update(ctx, |controller, ctx| {
                     controller.shutdown_pty(ctx);
@@ -88,10 +94,17 @@ pub fn wire_up_pty_controller_with_surface<T: EventLoopSender, S: TerminalSurfac
                     return;
                 };
 
-                model_clone.lock().block_list_mut().active_block_mut().set_cloud_workflow_state(event.workflow_id);
-                controller.update(ctx, |controller, ctx| {
+                let outcome = controller.update(ctx, |controller, ctx| {
                     controller.write_command(&event.command, shell_type, event.source.clone(), ctx)
                 });
+                if !outcome.is_accepted() {
+                    return;
+                }
+                model_clone
+                    .lock()
+                    .block_list_mut()
+                    .active_block_mut()
+                    .set_cloud_workflow_state(event.workflow_id);
 
                 if event.should_add_command_to_history {
                     update_command_history(

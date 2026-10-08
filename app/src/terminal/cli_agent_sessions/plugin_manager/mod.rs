@@ -15,9 +15,9 @@ use gemini::GeminiPluginManager;
 use opencode::OpenCodePluginManager;
 
 use crate::features::FeatureFlag;
+use crate::terminal::CLIAgent;
 use crate::terminal::model::session::LocalCommandExecutor;
 use crate::terminal::shell::ShellType;
-use crate::terminal::CLIAgent;
 
 /// Distinguishes whether the plugin instructions modal should show install or update steps.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -288,16 +288,20 @@ pub(crate) fn plugin_manager_for_with_shell(
         CLIAgent::OpenCode
         | CLIAgent::Codex
         | CLIAgent::Gemini
+        | CLIAgent::Grok
         | CLIAgent::Amp
         | CLIAgent::Droid
         | CLIAgent::Copilot
         | CLIAgent::Pi
+        | CLIAgent::OhMyPi
         | CLIAgent::Auggie
         | CLIAgent::CursorCli
         | CLIAgent::Hermes
+        | CLIAgent::Kiro
         | CLIAgent::Goose
         | CLIAgent::Vibe
         | CLIAgent::Antigravity
+        | CLIAgent::WarpTui
         | CLIAgent::Unknown => None,
     }
 }

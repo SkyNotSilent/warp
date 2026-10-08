@@ -6,12 +6,12 @@ use parking_lot::Mutex;
 use url::{Origin, ParseError, Url};
 
 use super::Channel;
+use crate::AppId;
 use crate::channel::config::{
     ChannelConfig, IapConfig, McpOAuthProviderConfig, OzConfig, RudderStackDestination,
     WarpServerConfig,
 };
 use crate::features::FeatureFlag;
-use crate::AppId;
 
 lazy_static! {
     static ref CHANNEL_STATE: Mutex<ChannelState> = Mutex::new(ChannelState::init());
@@ -92,7 +92,9 @@ impl ChannelState {
     pub fn override_server_root_url(url: impl Into<Cow<'static, str>>) -> Result<(), ParseError> {
         let url = url.into();
         Url::parse(&url)?;
-        CHANNEL_STATE.lock().config.server_config.server_root_url = url;
+        let mut channel_state = CHANNEL_STATE.lock();
+        channel_state.config.server_config.server_root_url = url;
+        channel_state.config.server_config.iap_config = None;
         Ok(())
     }
 

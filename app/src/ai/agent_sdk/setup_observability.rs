@@ -188,17 +188,20 @@ pub(crate) enum SetupStep {
     CloudProviderSetup,
     McpServerStartup,
     AgentProfileConfiguration,
-    ProfileMcpServerStartup,
     SharedSessionEstablishment,
     GlobalSkillResolution,
     GlobalSkillRepoClone,
     EnvironmentRepoClone,
+    CacheSetup,
     EnvironmentSetupCommands,
     EnvironmentCodebaseIndexing,
     FileBasedMcpDiscovery,
     FileBasedMcpReadiness,
+    InitialGlobalMcpScan,
+    InitialGlobalMcpReadiness,
     EnvironmentSkillLoading,
     GlobalSkillLoading,
+    SkillsDirsLoading,
     ConversationResumeLoading,
     ThirdPartyHarnessPreparation,
     ThirdPartyHarnessExternalConversation,
@@ -246,9 +249,6 @@ impl SetupStep {
             Self::AgentProfileConfiguration => {
                 span_and_name!("setup_agent_profile_configuration")
             }
-            Self::ProfileMcpServerStartup => {
-                span_and_name!("setup_profile_mcp_server_startup")
-            }
             Self::SharedSessionEstablishment => {
                 span_and_name!("setup_shared_session_establishment")
             }
@@ -260,6 +260,9 @@ impl SetupStep {
             }
             Self::EnvironmentRepoClone => {
                 span_and_name!("setup_environment_repo_clone")
+            }
+            Self::CacheSetup => {
+                span_and_name!("setup_caches")
             }
             Self::EnvironmentSetupCommands => {
                 span_and_name!("setup_environment_setup_commands")
@@ -273,11 +276,20 @@ impl SetupStep {
             Self::FileBasedMcpReadiness => {
                 span_and_name!("setup_file_based_mcp_readiness")
             }
+            Self::InitialGlobalMcpScan => {
+                span_and_name!("setup_initial_global_mcp_scan")
+            }
+            Self::InitialGlobalMcpReadiness => {
+                span_and_name!("setup_initial_global_mcp_readiness")
+            }
             Self::EnvironmentSkillLoading => {
                 span_and_name!("setup_environment_skill_loading")
             }
             Self::GlobalSkillLoading => {
                 span_and_name!("setup_global_skill_loading")
+            }
+            Self::SkillsDirsLoading => {
+                span_and_name!("setup_skills_dirs_loading")
             }
             Self::ConversationResumeLoading => {
                 span_and_name!("setup_conversation_resume_loading")

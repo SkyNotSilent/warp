@@ -4,9 +4,9 @@ use itertools::{Either, Itertools};
 use warp_core::features::FeatureFlag;
 use warpui::{EntityId, UpdateView, ViewContext};
 
-use super::{group_member_indices, Workspace};
+use super::{Workspace, group_member_indices};
 use crate::menu::{MenuItem, MenuItemFields};
-use crate::tab::{TabData, MOVE_TO_GROUP_LABEL};
+use crate::tab::{MOVE_TO_GROUP_LABEL, TabData};
 use crate::workspace::action::{TabContextMenuAnchor, WorkspaceAction};
 use crate::workspace::tab_group::{TabGroup, TabGroupId};
 use crate::workspace::util::PaneViewLocator;
@@ -147,15 +147,75 @@ impl Workspace {
     /// visually active across a tab reorder. Pass the pane group id captured
     /// before the reorder; no-op if it can't be found.
     pub(super) fn restore_active_tab_index(&mut self, pane_group_id: Option<EntityId>) {
-        if let Some(active_id) = pane_group_id {
-            if let Some(new_index) = self
+        if let Some(active_id) = pane_group_id
+            && let Some(new_index) = self
                 .tabs
                 .iter()
                 .position(|tab| tab.pane_group.id() == active_id)
-            {
-                self.active_tab_index = new_index;
+        {
+            self.active_tab_index = new_index;
+        }
+    }
+
+    /// Re-anchors a freshly restored block of tabs past `host_group_id`'s last
+    /// member, so restoring into a window whose active tab was already grouped
+    /// does not leave that group split around the new tabs. `restored_indices`
+    /// indexes the current tab list and must be read before any other move.
+    ///
+    /// A no-op while the host group is still contiguous: `NewTabPlacement` can
+    /// land the block outside the group entirely, and that placement is the
+    /// user's setting, not something to override.
+    pub(super) fn move_restored_block_past_group(
+        &mut self,
+        restored_indices: &[usize],
+        host_group_id: TabGroupId,
+    ) {
+        if restored_indices.is_empty() {
+            return;
+        }
+
+        // Restored tabs never join the host group -- their ids are minted
+        // fresh -- so these are exactly the pre-existing members.
+        let member_indices: Vec<usize> = self
+            .tabs
+            .iter()
+            .enumerate()
+            .filter(|(_, tab)| tab.group_id == Some(host_group_id))
+            .map(|(index, _)| index)
+            .collect();
+        let (Some(&first), Some(&last)) = (member_indices.first(), member_indices.last()) else {
+            return;
+        };
+        if last - first + 1 == member_indices.len() {
+            return;
+        }
+
+        let restored: HashSet<usize> = restored_indices.iter().copied().collect();
+        let active_pane_group_id = self
+            .tabs
+            .get(self.active_tab_index)
+            .map(|tab| tab.pane_group.id());
+
+        let mut restored_tabs = Vec::with_capacity(restored.len());
+        let mut other_tabs = Vec::with_capacity(self.tabs.len());
+        for (index, tab) in self.tabs.drain(..).enumerate() {
+            if restored.contains(&index) {
+                restored_tabs.push(tab);
+            } else {
+                other_tabs.push(tab);
             }
         }
+
+        // Mirrors `new_tab_group_from_selected_tabs`: search from the right for
+        // the host group's last surviving member and insert just past it.
+        let insert_at = other_tabs
+            .iter()
+            .rposition(|tab| tab.group_id == Some(host_group_id))
+            .map_or(other_tabs.len(), |last| last + 1);
+        other_tabs.splice(insert_at..insert_at, restored_tabs);
+        self.tabs = other_tabs;
+
+        self.restore_active_tab_index(active_pane_group_id);
     }
 
     /// Context-aware "create group" entry point used by the
@@ -464,9 +524,11 @@ impl Workspace {
     /// group" only when there's a destination group worth offering.
     fn tab_selection_menu_items(&self) -> Vec<MenuItem<WorkspaceAction>> {
         let shared_group = self.selection_shared_group();
-        let mut menu_items = vec![MenuItemFields::new("Create group from tabs")
-            .with_on_select_action(WorkspaceAction::NewTabGroupFromSelectedTabs)
-            .into_item()];
+        let mut menu_items = vec![
+            MenuItemFields::new("Create group from tabs")
+                .with_on_select_action(WorkspaceAction::NewTabGroupFromSelectedTabs)
+                .into_item(),
+        ];
 
         // Only single-group selections have an unambiguous group to leave.
         if shared_group.is_some() {
